@@ -1,0 +1,87 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+@theme {
+  --color-ink-900: #1a2332;
+  --color-ink-700: #3a4358;
+  --color-ink-500: #5a6479;
+  --color-ink-300: #9aa0af;
+  --color-paper: #fafbff;
+  --color-paper-deep: #f5f3ff;
+  --color-card: #ffffff;
+  --color-brand-50: #f5f3ff;
+  --color-brand-500: #7c3aed;
+  --color-brand-600: #6d28d9;
+  --color-brand-700: #5b21b6;
+  --color-ok-bg: #dcfce7;
+  --color-ok-text: #166534;
+  --color-warn-bg: #fef3c7;
+  --color-warn-text: #92400e;
+  --color-danger-bg: #fee2e2;
+  --color-danger-text: #991b1b;
+  --radius-card: 16px;
+  --radius-pill: 9999px;
+  --radius-soft: 10px;
+  --shadow-card: 0 2px 8px rgba(15,23,42,.04), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-cardH: 0 4px 16px rgba(15,23,42,.08);
+  --duration-micro: 120ms;
+  --duration-fast: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 320ms;
+  --ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.4, 0, 1, 1);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply min-h-screen bg-gradient-to-b from-paper to-paper-deep text-ink-900;
+    margin: 0;
+    font-family: "Inter", "PingFang SC", "Microsoft YaHei UI", "Noto Sans SC", sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
+
+  ::selection {
+    @apply bg-brand-500 text-white;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

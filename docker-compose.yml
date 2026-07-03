@@ -1,0 +1,59 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: invoice-archive-ai:local
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      INVOICE_HOST: 0.0.0.0
+      INVOICE_PORT: "8000"
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/gemini-service-account.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - invoice_data:/app/data
+      - ./secrets:/app/secrets:ro
+      - ./exports:/app/exports
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # Demo data loader: one-shot service that copies the committed snapshot in
+  # ./demo-data into the data volume. Enabled only via the "demo-data" profile
+  # (./start.sh runs it on request). Idempotent: an already-populated volume is
+  # left untouched, so it never clobbers real data.
+  demo-data:
+    image: alpine:3.20
+    profiles:
+      - demo-data
+    volumes:
+      - invoice_data:/app/data
+      - ./demo-data:/demo-data:ro
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        if [ -f /app/data/invoices.sqlite3 ]; then
+          echo "data volume already populated; leaving it untouched."
+        else
+          echo "seeding demo snapshot into data volume..."
+          cp -a /demo-data/. /app/data/
+          echo "demo data ready."
+        fi
+
+volumes:
+  invoice_data:

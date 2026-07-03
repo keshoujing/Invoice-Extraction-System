@@ -1,0 +1,52 @@
+# --- Secrets & credentials (NEVER commit real ones) ---
+.env
+.env.*
+!.env.example
+# In secrets/, track only the templates + README, never real key files:
+secrets/*
+!secrets/README.md
+!secrets/*.example
+backend/secrets/
+*-service-account.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# --- Node / Vite ---
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+
+# --- Local app data (runtime DB, uploads) ---
+data/
+exports/
+release/
+
+# --- Eval artifacts (scoring set is reproducible via evaluation/scripts/fetch_dataset.py) ---
+evaluation/scoring-set/
+evaluation/runs/
+
+# --- Generated exports ---
+*.zip
+*.xlsx
+*.xls
+
+# --- Logs ---
+*.log
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
