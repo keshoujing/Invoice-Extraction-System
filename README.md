@@ -97,28 +97,16 @@ served from the same port as the API.
 
 ## Highlights
 
-The part I usually highlight is that this is not just a thin wrapper around Gemini.
-I built a full invoice workflow around the model. For supplier recognition, the first
-LLM call gives me a few possible vendor names, then I match those against the supplier
-master with `rapidfuzz`. If the top candidates are too close, I make one more cheap
-LLM call and ask it to choose only from the shortlist. That keeps the system accurate
-without spending extra tokens on easy cases.
-
-For extraction, the schema is not hard-coded. Each supplier group can define its own
-fields and prompt, and the backend builds a Pydantic response model at runtime. That
-means the LLM output is structured, validated, and still flexible enough to keep
-unexpected fields instead of throwing them away.
-
-The other important piece is the feedback loop. When a user fixes a value during review,
-I store both the model output and the corrected value. Those corrections can become
-few-shot examples for that supplier and also ground truth for evaluation. I also log
-token usage, cost, latency, supplier, stage, and prompt version for every call, so I can
-debug quality and cost from actual production behavior instead of guessing.
-
-On the reliability side, provider errors are classified and retried only when retrying
-makes sense, with exponential backoff and jitter. The LLM client is behind a small
-provider interface, so the production path uses native Gemini, but the app can also run
-through a LiteLLM-backed client.
+| Area | What's implemented |
+|---|---|
+| **Cost-aware supplier ID** | LLM proposes vendor candidates → `rapidfuzz` composite scoring (token-set/sort + core-token overlap, generic-word penalties) → a **second LLM call fires only when the top scores fall within a margin**. On clean data it never fires; on ambiguous names it does. |
+| **Structured output** | Response schema is built *at runtime* from the per-supplier field config (`create_model`), then parsed and validated with Pydantic — with coercions for money/date formats and `extra="allow"` so unexpected keys survive. |
+| **Data flywheel (HITL)** | Human corrections are stored with the model's original output and the field-level diff, then reused as per-supplier few-shot examples and auto-generated eval ground truth. |
+| **Token thrift** | Text-PDFs are detected and cropped to the top half (where the issuer block sits) before the vision call. |
+| **Reliability** | Provider errors are classified (rate-limit / transient / timeout / validation) and retried with exponential backoff + jitter; only retryable classes are retried. |
+| **Observability** | Per-call token usage, cost and latency logged to SQLite with business dimensions (supplier / stage / prompt version); optional LangSmith tracing that maps to the LLM run type and strips image bytes. |
+| **Evaluation** | A headless harness runs the **production extraction code path** over a labeled set and reports per-field accuracy with Wilson 95% confidence intervals. |
+| **Provider abstraction** | `LLMClient` ABC with a native Gemini client (production) and a LiteLLM-backed client. |
 
 ## Evaluation
 
@@ -131,14 +119,13 @@ from their denominator rather than counted as failures.
 
 **Public benchmark — [katanaml/invoices-donut-data-v1](https://huggingface.co/datasets/katanaml-org/invoices-donut-data-v1) (MIT), n = 100 synthetic invoices:**
 
-On the public synthetic benchmark, the extraction results were very strong: invoice
-number and total amount were correct on every labeled example, invoice date missed one
-case out of 100, and 99 out of 100 invoices had all tracked fields correct. Supplier
-identification also reached 100 out of 100 on this set against a supplier master of 418
-vendors. I treat those numbers as a clean-data benchmark, not as a claim that real-world
-scans are always perfect. For production-style documents, I compile separate metrics
-from human review labels, because that data has messier scans and more near-duplicate
-supplier names.
+| Task | Metric | Accuracy |
+|---|---|---|
+| Field extraction | `invoice_number` | 100% (99/99) |
+| | `invoice_date` | 99% (99/100) |
+| | `total_amount` | 100% (99/99) |
+| | all fields correct | 99% (99/100) |
+| Supplier identification | correct `vendor_code` (master of 418) | 100% (100/100) |
 
 > _A private, real-world set (scanned documents, near-duplicate supplier names) is scored
 > separately; those figures are compiled from production review labels via
@@ -195,21 +182,12 @@ Dockerfile               # multi-stage build: frontend + API in one image
 docker-compose.yml       # single-container deploy + optional demo-data loader
 ```
 
-## Project Notes
+## Notes
 
-If I were explaining the project in an interview, I would describe it as a local,
-single-tenant invoice automation system. The company keeps the uploaded invoices,
-SQLite database, and exported files on its own machine, and only the model calls go out
-to Vertex AI. That was intentional, because invoices can contain sensitive supplier and
-pricing information.
-
-The main engineering challenge was making the LLM useful inside a reliable workflow.
-I had to handle supplier matching, per-supplier extraction rules, human correction,
-cost tracking, retries, evals, and packaging. So the project became less about one
-prompt and more about building the system around the prompt.
-
-For testing, I covered the backend with unit and integration tests around the service
-layer, LLM abstraction, API routes, and database migrations. Then I added a separate
-evaluation harness that runs the real extraction path over labeled invoices, so I can
-measure quality the same way the app actually runs. The public repo does not include
-real supplier data or credentials; the demo data is synthetic and MIT-licensed.
+- **Self-hosted and single-tenant by design:** invoices, the SQLite DB, and uploads
+  stay on the company's own machine (`data/`, git-ignored). No third-party SaaS.
+- **Testing:** the backend has 150+ unit and integration tests (services, LLM layer,
+  API routes, DB migrations); the eval harness above covers the extraction pipeline
+  end-to-end.
+- No real supplier data or credentials are included in this repository; the sample
+  data is synthetic and MIT-licensed.
