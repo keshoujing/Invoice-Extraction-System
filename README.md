@@ -20,6 +20,20 @@ correction loop that feeds a data flywheel, per-call cost/latency telemetry, and
 
 ![Core pipeline](docs/images/icqQ2.png)
 
+## Product tour
+
+Supplier preview identifies invoice candidates before full extraction.
+
+![Pending invoice queue with active recognition state](docs/images/readme-recognition-running.png)
+
+The second-stage invoice extractor fills reviewable fields next to the source document.
+
+![Field extraction review with invoice preview](docs/images/readme-field-extraction-review.png)
+
+Confirmed invoices become a searchable archive table.
+
+![Confirmed invoice archive table](docs/images/readme-archive-table.png)
+
 ---
 
 ## What it does

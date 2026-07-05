@@ -26,6 +26,7 @@ from eval_lib import flatten_gt, map_ground_truth, parse_money  # noqa: E402
 from supplier_master import build_master, expected_code, parse_company_name  # noqa: E402
 
 DEMO = REPO / "demo-data"
+DEMO_CONTAINER_DATA = Path("/app/data")
 SRC = REPO / "evaluation" / "invoices-donut-demo"
 N_CONFIRMED = 12
 N_PENDING = 4
@@ -99,12 +100,13 @@ def build() -> None:
             confirmed = idx < N_CONFIRMED
             stored = f"{vendor_code}_{idx + 1:03d}.png"
             target_dir = confirmed_dir if confirmed else pending_dir
+            container_dir = DEMO_CONTAINER_DATA / "uploads" / ("confirmed" if confirmed else "pending")
             shutil.copy2(SRC / rec["file"], target_dir / stored)
 
             row = {
                 "original_filename": Path(rec["file"]).name,
                 "stored_filename": stored,
-                "file_path": str(target_dir / stored),
+                "file_path": str(container_dir / stored),
                 "mime_type": "image/png",
                 "status": "confirmed" if confirmed else "pending",
                 "uploaded_at": NOW,
@@ -132,6 +134,7 @@ def build() -> None:
                     "document_is_invoice": "True",
                     "document_type": "invoice",
                     "vendor_matched": "True",
+                    "vendor_match_confidence": 1.0,
                     "invoice_type": "Invoice",
                     "PO_number": "",
                     "invoice_number": gt["invoice_number"],
