@@ -7,16 +7,16 @@ files and Excel.
 
 The interesting part isn't "call an LLM on an invoice" — it's everything around it:
 supplier identification against a large master list, a **cost-aware two-stage matcher**
-that only spends a second LLM call when the answer is genuinely ambiguous, per-supplier
-prompt specialization, a human-in-the-loop correction loop that feeds a data flywheel,
-per-call cost/latency telemetry, and a **reproducible evaluation harness with confidence
-intervals**.
+that only spends a second LLM call when the answer is genuinely ambiguous,
+operator-configurable **per-supplier prompt and field rules**, a human-in-the-loop
+correction loop that feeds a data flywheel, per-call cost/latency telemetry, and a
+**reproducible evaluation harness with confidence intervals**.
 
 > Self-hosted and in production use in a real purchasing workflow.
 
 - **Backend:** Python · FastAPI · SQLite · Google Gemini on Vertex AI (`google-genai`)
 - **Frontend:** React · TypeScript · Vite · Tailwind
-- **LLM ops:** Pydantic-validated structured output · per-call token/cost telemetry · LangSmith tracing · reproducible eval harness
+- **LLM ops:** supplier-specific prompt rules · Pydantic-validated structured output · per-call token/cost telemetry · LangSmith tracing · reproducible eval harness
 
 ![Core pipeline](docs/images/icqQ2.png)
 
@@ -100,6 +100,7 @@ served from the same port as the API.
 | Area | What's implemented |
 |---|---|
 | **Cost-aware supplier ID** | LLM proposes vendor candidates → `rapidfuzz` composite scoring (token-set/sort + core-token overlap, generic-word penalties) → a **second LLM call fires only when the top scores fall within a margin**. On clean data it never fires; on ambiguous names it does. |
+| **Supplier-specific rule tuning** | Suppliers can be mapped to configurable schemes with their own extraction prompt, field schema, fixed values and export columns, so one vendor's edge cases can be tuned without changing backend code. |
 | **Structured output** | Response schema is built *at runtime* from the per-supplier field config (`create_model`), then parsed and validated with Pydantic — with coercions for money/date formats and `extra="allow"` so unexpected keys survive. |
 | **Data flywheel (HITL)** | Human corrections are stored with the model's original output and the field-level diff, then reused as per-supplier few-shot examples and auto-generated eval ground truth. |
 | **Token thrift** | Text-PDFs are detected and cropped to the top half (where the issuer block sits) before the vision call. |
