@@ -36,6 +36,7 @@ release/
 # --- Eval artifacts (scoring set is reproducible via evaluation/scripts/fetch_dataset.py) ---
 evaluation/scoring-set/
 evaluation/runs/
+invoice-data/
 
 # --- Generated exports ---
 *.zip

@@ -142,8 +142,17 @@ from their denominator rather than counted as failures.
 | | all fields correct | 99% (99/100) |
 | Supplier identification | correct `vendor_code` (master of 418) | 100% (100/100) |
 
-> _A private, real-world set (scanned documents, near-duplicate supplier names) is scored
-> separately; those figures are compiled from production review labels via
+**Private production-style eval — real invoices, n = 100 (data and per-row reports are not included):**
+
+| Task | Metric | Accuracy |
+|---|---|---|
+| Field extraction | `invoice_number` | 93% (93/100) |
+| | `invoice_date` | 95% (95/100) |
+| | `total_amount` | 99% (98/99) |
+| | all fields correct | 92% (92/100) |
+| Supplier identification | correct `vendor_code` (master of 37) | 99% (99/100) |
+
+> _Production review labels can also be compiled into future private golden sets via
 > [`backend/evals/refresh_from_review_labels.py`](backend/evals/refresh_from_review_labels.py)._
 
 ### Reproduce
